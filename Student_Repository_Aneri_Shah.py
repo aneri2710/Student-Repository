@@ -1,9 +1,11 @@
 """
 Aneri Shah
-Homework 10
+Homework 11
 
 Implementing student, instructor, grades, major and repository for entering and processing all the student data,
-instructor data and the student's grade along with the major of that student"""
+instructor data and the student's grade along with the major of that student
+Connecting to the database and running query to print the student grade summary table
+"""
 
 import os
 from collections import defaultdict
@@ -12,6 +14,7 @@ from typing import Dict, DefaultDict
 from prettytable import PrettyTable
 
 from HW08_Aneri_Shah import file_reader
+import sqlite3
 
 
 class Major:
@@ -78,7 +81,8 @@ class Student:
 
     def gpa(self):
         """calculate the GPA and return to student class"""
-        grades: Dict[str, float] = {"A": 4.00, "A-": 3.75, "B+": 3.25, "B": 3.00, "B-": 2.75, "C+": 2.25, "C": 2.00, "C-": 0.00, "D+": 0.00, "D": 0.00, "D-": 0.00, "F": 0.00}
+        grades: Dict[str, float] = {"A": 4.00, "A-": 3.75, "B+": 3.25, "B": 3.00, "B-": 2.75, "C+": 2.25, "C": 2.00,
+                                    "C-": 0.00, "D+": 0.00, "D": 0.00, "D-": 0.00, "F": 0.00}
         try:
             total: float = sum([grades[grade] for grade in self._courses.values()]) / len(self._courses.values())
             return round(total, 2)
@@ -138,6 +142,7 @@ class Repository:
             self._read_instructors(os.path.join(path, "instructors.txt"))
             self._read_grades(os.path.join(path, "grades.txt"))
             self._read_re()
+
         except (FileNotFoundError, ValueError) as e:
             print(e)
 
@@ -163,7 +168,7 @@ class Repository:
         """ read each line from student file and create instance of class student
         and if the file not found or any value error, it raises an exception """
         try:
-            for cwid, name, major in file_reader(path, 3, sep=';', header=True):
+            for cwid, name, major in file_reader(path, 3, sep='\t', header=True):
                 if cwid not in self._students:
                     self._students[cwid] = Student(cwid, name, major)
                 else:
@@ -175,7 +180,7 @@ class Repository:
         """read each line from instructors file and create instance of class instructor
         and if the file not found or any value error, it raises an exception"""
         try:
-            for cwid, name, dept in file_reader(path, 3, sep='|', header=True):
+            for cwid, name, dept in file_reader(path, 3, sep='\t', header=True):
                 if cwid not in self._instructors:
                     self._instructors[cwid] = Instructor(cwid, name, dept)
                 else:
@@ -189,7 +194,7 @@ class Repository:
         and checks for the individual student and the individual instructor.
         Raises an exception when unknown student is found"""
         try:
-            for student_cwid, course, grade, instructor_cwid in file_reader(path, 4, sep='|', header=True):
+            for student_cwid, course, grade, instructor_cwid in file_reader(path, 4, sep='\t', header=True):
                 try:
                     s: Student = self._students[student_cwid]
                     s.add_course_grade(course, grade)
@@ -243,9 +248,32 @@ class Repository:
         print(pt)
 
 
+def database_connection():
+    print("Student Grade Summary")
+    try:
+        db:sqlite3.Connection = sqlite3.connect('/Users/anerishah/Desktop/SSW810/WEEK 11/810_db_HW11')
+    except sqlite3.OperationalError as e:
+        print(e)
+    else:
+        pt:PrettyTable = PrettyTable(field_names=['Name', ' CWID', 'Course', 'Grade', 'Instructor'])
+        try:
+            query = """
+                     select s.Name, s.CWID, g.Course, g.Grade, i.Name
+                                      from students s join grades g on s.CWID = g.StudentCWID join instructors i on g.InstructorCWID = i.CWID
+                                                           order by s.Name, g.Grade
+                     """
+            for row in db.execute(query):
+                pt.add_row(row)
+            print(pt)
+
+        except sqlite3.OperationalError as e:
+            print(e)
+
+
 def main():
     """ define a repository for stevens"""
-    stevens: Repository = Repository("/Users/anerishah/Desktop/SSW810/WEEK 10", ptable=True)
+    stevens: Repository = Repository("/Users/anerishah/Desktop/SSW810/WEEK 11", ptable=True)
+    database_connection()
 
 
 if __name__ == '__main__':
