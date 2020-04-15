@@ -8,11 +8,11 @@ Implementing different functions to implement different python modules such as d
 
 from datetime import datetime, timedelta
 import os
-from typing import Tuple, Iterator, Dict, List
+from typing import Tuple, Iterator, Dict
 from prettytable import PrettyTable
 
 
-def date_arithmetic() -> Tuple[datetime, datetime, int]:
+def date_arithmetic()-> Tuple[datetime, datetime, int]:
     """ Implementing datetime module for returning of dates after some specific period of time """
     three_days_after_02272000: datetime = datetime(2020, 2, 27) + timedelta(days=3)
 
@@ -31,29 +31,29 @@ def file_reader(path, fields, sep='|', header=False) -> Iterator[Tuple[str]]:
     try:
         filePath = open(path, "r")
     except FileNotFoundError:
-        raise FileNotFoundError(f"Cant open file {path}")
+        print("File not found")
     else:
         with filePath:
             if filePath != "":
-                for n, line in enumerate(filePath, 1):
-                    result:List[str] = line.rstrip('\n').split(sep)
-                    if len(result) != fields:
-                        raise ValueError(f" {filePath} line: {n}: read {len(result)} fields but expected {fields} ")
-                        # yield tuple(line.strip().split(sep))
-                    elif n > 1 or header is False:
-                        yield result
+                if header is True:
+                    next(filePath)
+                for offset, line in enumerate(filePath):
+                    result = line.strip().split(sep)
+                    if len(result) == fields:
+                        yield tuple(line.strip().split(sep))
+                    else:
+                        raise ValueError(f" {filePath} has {len(result)} on line {offset + 1} but expected {fields} ")
 
 
 class FileAnalyzer:
     """ Class FileAnalyzer is a class which implements different functions to get the number of lines, characters,
     functions and classes in a directory with .py file """
-
     def __init__(self, directory: str) -> None:
         """ Initializing the directory and file summary of the class """
-        self.directory: str = directory  # NOT mandatory!
+        self.directory: str = directory # NOT mandatory!
         self.files_summary: Dict[str, Dict[str, int]] = dict()
 
-        self.analyze_files()  # summerize the python files data
+        self.analyze_files() # summerize the python files data
 
     def analyze_files(self) -> None:
         """ This will search the file ending with .py and counts the number of  lines, characters, unctions and
@@ -62,7 +62,7 @@ class FileAnalyzer:
             if files.endswith('.py'):
                 classno, lines, funcno, charno = 0, 0, 0, 0
                 try:
-                    f = open(os.path.join(self.directory, files), 'r')
+                    f = open(os.path.join(self.directory,files),'r')
                 except FileNotFoundError:
                     raise FileNotFoundError
                 else:
